@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import usuariosRoutes from './routes/usuarios.js';
 import visitantesRoutes from './routes/visitantes.js';
+import testarConexao from './routes/teste.js';
 
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use(express.static(path.join(__dirname, '../public/fotos')));
 app.use('/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/visitantes', visitantesRoutes);
+app.use('/api', testarConexao); // acessa em /api/testar-conexao
 
 
 // Porta
