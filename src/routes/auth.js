@@ -65,7 +65,12 @@ router.post('/login', async (req, res) => {
         console.error('Erro no login:', err);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }
+    app.get('/', (req, res) => {
+  res.send('API online! 🚀');
 });
+
+});
+
 
 // A rota de registro foi movida para o arquivo de CRUD (usuarios.js)
 // para centralizar o gerenciamento de usuários.
