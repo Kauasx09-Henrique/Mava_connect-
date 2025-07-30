@@ -32,6 +32,11 @@ app.use('/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/visitantes', visitantesRoutes);
 app.use('/api', testarConexao); // acessa em /api/testar-conexao
+// index.js ou app.js
+app.get('/', (req, res) => {
+  res.send('Mava Connect API está online 🚀');
+});
+
 
 
 // Porta
