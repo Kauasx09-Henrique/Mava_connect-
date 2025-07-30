@@ -1,7 +1,7 @@
 // Caminho do arquivo: /routes/visitantes.js
 
 import express from 'express';
-import jwt from 'jsonwebtoken'; // 1. Importe a biblioteca jsonwebtoken
+import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 
 const router = express.Router();
@@ -9,23 +9,20 @@ const router = express.Router();
 // --- ROTA PARA CRIAR UM NOVO VISITANTE (CREATE) ---
 router.post('/', async (req, res) => {
   try {
-    // 2. PEGAR O ID DO USUÁRIO A PARTIR DO TOKEN
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       return res.status(401).json({ error: 'Token não fornecido.' });
     }
-    const token = authHeader.split(' ')[1]; // Formato "Bearer TOKEN"
+    const token = authHeader.split(' ')[1];
     
     let usuario_id;
     try {
-      // Decodifica o token para pegar o payload (que contém o id)
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      usuario_id = decoded.id; // Pega o ID do usuário logado
+      usuario_id = decoded.id;
     } catch (err) {
       return res.status(401).json({ error: 'Token inválido.' });
     }
 
-    // O resto do seu código continua aqui...
     const {
       nome,
       data_nascimento,
@@ -48,8 +45,6 @@ router.post('/', async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // --- CORREÇÃO APLICADA AQUI ---
-      // A busca agora é case-insensitive (não diferencia maiúsculas de minúsculas)
       const gfResult = await client.query('SELECT id FROM gf WHERE LOWER(nome) = LOWER($1)', [gf_responsavel]);
       if (gfResult.rows.length === 0) {
         throw new Error(`GF com o nome '${gf_responsavel}' não encontrado.`);
@@ -73,12 +68,15 @@ router.post('/', async (req, res) => {
       const newEndereco = await client.query(enderecoQuery, enderecoValues);
       const endereco_id = newEndereco.rows[0].id;
 
+      // --- CORREÇÃO APLICADA AQUI ---
+      const data_visita = new Date(); // 1. Pega a data e hora atuais.
+
       const visitanteQuery = `
         INSERT INTO visitantes (
           nome, data_nascimento, telefone, sexo, email, estado_civil, profissao, 
-          como_conheceu, usuario_id, gf_id, endereco_id
+          como_conheceu, usuario_id, gf_id, endereco_id, data_visita 
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *;
       `;
       const visitanteValues = [
@@ -90,9 +88,10 @@ router.post('/', async (req, res) => {
         estado_civil,
         profissao,
         como_conheceu,
-        usuario_id, // 3. USA O ID DINÂMICO DO TOKEN
+        usuario_id,
         gf_id,
-        endereco_id
+        endereco_id,
+        data_visita, // 2. Adiciona a data atual aos valores a serem inseridos.
       ];
       const novoVisitante = await client.query(visitanteQuery, visitanteValues);
 
@@ -107,7 +106,6 @@ router.post('/', async (req, res) => {
       client.release();
     }
   } catch (globalErr) {
-      // Captura erros que acontecem antes da transação, como o de token
       console.error('Erro geral na rota de cadastro de visitante:', globalErr);
       res.status(500).json({ error: 'Erro inesperado no servidor.' });
   }
