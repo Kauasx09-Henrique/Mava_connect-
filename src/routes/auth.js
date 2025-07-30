@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
+     console.log('Tentativa de login recebida:', req.body); 
+
   const { email, senha } = req.body;
 
   try {
