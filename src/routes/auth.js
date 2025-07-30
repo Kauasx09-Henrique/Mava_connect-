@@ -3,7 +3,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 // Garanta que sua conexão 'pool' está sendo importada corretamente do seu arquivo de configuração de banco de dados.
-import { pool } from '../db.js'; 
+import  pool  from '../../src/db.js'; 
 
 const router = express.Router();
 

@@ -2,7 +2,7 @@
 
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { pool } from '../db.js';
+import  pool from '../db.js';
 
 // --- Configuração do Multer para Upload de Arquivos ---
 import multer from 'multer';

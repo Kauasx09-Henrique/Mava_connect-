@@ -1,12 +1,9 @@
-// db.js
-import pg from 'pg';
-import dotenv from 'dotenv';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-dotenv.config();
-
-export const pool = new pg.Pool({
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // importante para Railway
-  },
+    rejectUnauthorized: false
+  }
 });
