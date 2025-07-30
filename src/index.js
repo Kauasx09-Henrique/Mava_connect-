@@ -11,6 +11,8 @@ import authRoutes from './routes/auth.js';
 import usuariosRoutes from './routes/usuarios.js';
 import visitantesRoutes from './routes/visitantes.js';
 import testarConexao from './routes/teste.js';
+import gfsRoutes from './routes/gfs.js';
+
 
 
 // Carrega as variáveis de ambiente do arquivo .env
@@ -38,6 +40,7 @@ app.use('/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/visitantes', visitantesRoutes);
 app.use('/api', testarConexao); // Rota de teste acessível em /api/testar-conexao
+app.use('/api/gfs', gfsRoutes);
 
 // A linha com erro foi removida daqui.
 
