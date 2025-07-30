@@ -48,7 +48,9 @@ router.post('/', async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      const gfResult = await client.query('SELECT id FROM gf WHERE nome = $1', [gf_responsavel]);
+      // --- CORREÇÃO APLICADA AQUI ---
+      // A busca agora é case-insensitive (não diferencia maiúsculas de minúsculas)
+      const gfResult = await client.query('SELECT id FROM gf WHERE LOWER(nome) = LOWER($1)', [gf_responsavel]);
       if (gfResult.rows.length === 0) {
         throw new Error(`GF com o nome '${gf_responsavel}' não encontrado.`);
       }
