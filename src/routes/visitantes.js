@@ -32,7 +32,7 @@ router.post('/', authenticateToken, async (req, res) => {
             nome, data_nascimento, telefone, sexo, email, estado_civil,
             profissao, como_conheceu, gf_responsavel, endereco
         } = req.body;
-        
+
         const usuario_id = req.user.id; // ID do usuário logado (secretaria/admin)
 
         if (!nome || !telefone || !gf_responsavel || !endereco) {
@@ -101,7 +101,7 @@ router.get('/', authenticateToken, async (req, res) => {
             ORDER BY v.data_visita DESC;
         `;
         const { rows } = await pool.query(query);
-        
+
         const formattedRows = rows.map(row => {
             const { cep, logradouro, numero, complemento, bairro, cidade, uf, ...visitanteData } = row;
             return {
@@ -109,14 +109,13 @@ router.get('/', authenticateToken, async (req, res) => {
                 endereco: { cep, logradouro, numero, complemento, bairro, cidade, uf }
             };
         });
-        
+
         res.json(formattedRows);
     } catch (err) {
         console.error('Erro ao buscar visitantes:', err);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }
 });
-
 
 // --- ROTA PARA ATUALIZAR DADOS GERAIS DE UM VISITANTE (UPDATE) ---
 // Protegida por autenticação
@@ -137,11 +136,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // Atualiza apenas os dados principais do visitante
         await client.query('UPDATE visitantes SET nome = $1, telefone = $2, email = $3 WHERE id = $4;', [nome, telefone, email, id]);
-        
+
         if (endereco_id && endereco) {
             await client.query(
-                'UPDATE endereco_visitante SET cep = $1, endereco = $2, numero = $3, bairro = $4, cidade = $5, uf = $6 WHERE id = $7;',
-                [endereco.cep, endereco.logradouro, endereco.numero, endereco.bairro, endereco.cidade, endereco.uf, endereco_id]
+                'UPDATE endereco_visitante SET cep = $1, endereco = $2, numero = $3, complemento = $4, bairro = $5, cidade = $6, uf = $7 WHERE id = $8;',
+                [endereco.cep, endereco.logradouro, endereco.numero, endereco.complemento, endereco.bairro, endereco.cidade, endereco.uf, endereco_id]
             );
         }
 
@@ -157,19 +156,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-
-// --- NOVA ROTA PARA ATUALIZAR APENAS O STATUS DE UM VISITANTE ---
-// Protegida e restrita a administradores
+// --- ROTA PARA ATUALIZAR APENAS O STATUS DE UM VISITANTE ---
+// Protegida por autenticação (sem restrição de tipo de usuário)
 router.patch('/:id/status', authenticateToken, async (req, res) => {
-    // 1. Verifica se o usuário é um administrador
-    if (req.user.tipo_usuario !== 'admin') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem alterar o status.' });
-    }
-
     const { id } = req.params;
     const { status } = req.body;
 
-    // 2. Valida o valor do status recebido
     const allowedStatus = ['entrou em contato', 'pendente', 'erro número'];
     if (!status || !allowedStatus.includes(status)) {
         return res.status(400).json({ error: 'Valor de status inválido.' });
@@ -193,7 +185,6 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
-
 // --- ROTA PARA DELETAR UM VISITANTE (DELETE) ---
 // Protegida por autenticação
 router.delete('/:id', authenticateToken, async (req, res) => {
@@ -201,7 +192,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        
+
         // Primeiro, pega o endereco_id antes de deletar o visitante
         const visitanteResult = await client.query('SELECT endereco_id FROM visitantes WHERE id = $1', [id]);
         if (visitanteResult.rowCount === 0) {
@@ -211,7 +202,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
         // Deleta o visitante
         await client.query('DELETE FROM visitantes WHERE id = $1', [id]);
-        
+
         // Se houver um endereço associado, deleta o endereço também
         if (endereco_id) {
             await client.query('DELETE FROM endereco_visitante WHERE id = $1', [endereco_id]);
