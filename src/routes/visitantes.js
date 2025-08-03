@@ -30,13 +30,18 @@ router.post('/', authenticateToken, async (req, res) => {
     try {
         const {
             nome, data_nascimento, telefone, sexo, email, estado_civil,
-            profissao, como_conheceu, gf_responsavel, endereco
+            profissao, como_conheceu, gf_responsavel, endereco, evento // <- adicionado evento
         } = req.body;
 
         const usuario_id = req.user.id; // ID do usuário logado (secretaria/admin)
 
-        if (!nome || !telefone || !gf_responsavel || !endereco) {
-            return res.status(400).json({ error: 'Campos essenciais (nome, telefone, GF, endereço) são obrigatórios.' });
+        if (!nome || !telefone || !gf_responsavel || !endereco || !evento) {
+            return res.status(400).json({ error: 'Campos essenciais (nome, telefone, GF, endereço, evento) são obrigatórios.' });
+        }
+
+        const allowedEventos = ['gf', 'evangelismo', 'culto'];
+        if (!allowedEventos.includes(evento)) {
+            return res.status(400).json({ error: 'Valor de evento inválido. Use: gf, evangelismo ou culto.' });
         }
 
         const client = await pool.connect();
@@ -63,14 +68,14 @@ router.post('/', authenticateToken, async (req, res) => {
             const visitanteQuery = `
                 INSERT INTO visitantes (
                     nome, data_nascimento, telefone, sexo, email, estado_civil, profissao, 
-                    como_conheceu, usuario_id, gf_id, endereco_id, data_visita, status
+                    como_conheceu, usuario_id, gf_id, endereco_id, evento, data_visita, status
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), 'pendente')
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), 'pendente')
                 RETURNING *;
             `;
             const visitanteValues = [
                 nome, data_nascimento || null, telefone, sexo, email,
-                estado_civil, profissao, como_conheceu, usuario_id, gf_id, endereco_id
+                estado_civil, profissao, como_conheceu, usuario_id, gf_id, endereco_id, evento
             ];
             const novoVisitante = await client.query(visitanteQuery, visitanteValues);
 
