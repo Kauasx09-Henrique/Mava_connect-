@@ -71,7 +71,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // --- ROTA PARA LER TODOS OS VISITANTES ---
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        // ALTERAÇÃO AQUI: Adicionado o JOIN para buscar o nome do GF
+        // CORREÇÃO: Adicionado o JOIN com a tabela 'gf' para buscar o nome.
         const query = `
             SELECT 
                 v.*, 
@@ -109,9 +109,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Visitante não encontrado.' });
         }
         const { endereco_id } = rows[0];
-
         await client.query('UPDATE visitantes SET nome = $1, telefone = $2, email = $3 WHERE id = $4;', [nome, telefone, email, id]);
-
         if (endereco_id && endereco) {
             await client.query('UPDATE endereco_visitante SET cep = $1, endereco = $2, numero = $3, complemento = $4, bairro = $5, cidade = $6, uf = $7 WHERE id = $8;', [endereco.cep, endereco.logradouro, endereco.numero, endereco.complemento, endereco.bairro, endereco.cidade, endereco.uf, endereco_id]);
         }
@@ -170,3 +168,4 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 export default router;
+// FIM DO ARQUIVO
