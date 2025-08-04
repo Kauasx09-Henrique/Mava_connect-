@@ -4,7 +4,6 @@ import { pool } from '../db.js';
 
 const router = express.Router();
 
-// --- Middleware de autenticação ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -20,7 +19,6 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// --- ROTA PARA CRIAR UM NOVO VISITANTE ---
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const {
@@ -30,7 +28,7 @@ router.post('/', authenticateToken, async (req, res) => {
         const usuario_id = req.user.id;
 
         if (!nome || !telefone || !gf_responsavel || !endereco || !evento) {
-            return res.status(400).json({ error: 'Campos essenciais (nome, telefone, GF, endereço, evento) são obrigatórios.' });
+            return res.status(400).json({ error: 'Campos essenciais são obrigatórios.' });
         }
         const allowedEventos = ['gf', 'evangelismo', 'culto'];
         if (!allowedEventos.includes(evento)) {
@@ -68,10 +66,8 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// --- ROTA PARA LER TODOS OS VISITANTES ---
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        // CORREÇÃO: Adicionado o JOIN com a tabela 'gf' para buscar o nome.
         const query = `
             SELECT 
                 v.*, 
@@ -83,7 +79,6 @@ router.get('/', authenticateToken, async (req, res) => {
             ORDER BY v.data_visita DESC;
         `;
         const { rows } = await pool.query(query);
-
         const formattedRows = rows.map(row => {
             const { cep, logradouro, numero, complemento, bairro, cidade, uf, ...visitanteData } = row;
             return {
@@ -97,7 +92,6 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// --- ROTA PARA ATUALIZAR DADOS GERAIS DE UM VISITANTE ---
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { nome, telefone, email, endereco } = req.body;
@@ -123,7 +117,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// --- ROTA PARA ATUALIZAR APENAS O STATUS ---
 router.patch('/:id/status', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -142,7 +135,6 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
-// --- ROTA PARA DELETAR UM VISITANTE ---
 router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
@@ -168,4 +160,3 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 export default router;
-// FIM DO ARQUIVO
