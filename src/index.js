@@ -25,7 +25,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Middlewares essenciais
-app.use(cors()); // Permite requisições de outras origens (frontend)
+app.use(cors({
+  origin: 'https://mava-connect.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// (Opcional, mas melhora compatibilidade com preflight)
+app.options('*', cors());
+// Permite requisições de outras origens (frontend)
 app.use(express.json()); // Permite que o Express entenda JSON no corpo das requisições
 
 // Middleware para servir arquivos estáticos (como as fotos dos usuários)
