@@ -13,8 +13,6 @@ import visitantesRoutes from './routes/visitantes.js';
 import testarConexao from './routes/teste.js';
 import gfsRoutes from './routes/gfs.js';
 
-
-
 // Carrega as variáveis de ambiente do arquivo .env
 dotenv.config();
 
@@ -24,34 +22,46 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middlewares essenciais
-app.use(cors({
-  origin: 'https://mava-connect.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+// --- CONFIGURAÇÃO DE CORS CORRIGIDA ---
+// Lista de origens permitidas (para desenvolvimento e produção)
+const allowedOrigins = [
+  'https://mava-connect.vercel.app',
+  'http://localhost:5173' // Adicione a porta do seu ambiente de desenvolvimento local
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (ex: Postman) ou se a origin estiver na lista
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pela política de CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], // 1. MÉTODO PATCH ADICIONADO
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
+
+// Middlewares essenciais
+app.use(cors(corsOptions));
 
 // (Opcional, mas melhora compatibilidade com preflight)
-app.options('*', cors());
-// Permite requisições de outras origens (frontend)
-app.use(express.json()); // Permite que o Express entenda JSON no corpo das requisições
+app.options('*', cors(corsOptions));
+
+// Permite que o Express entenda JSON no corpo das requisições
+app.use(express.json()); 
 
 // Middleware para servir arquivos estáticos (como as fotos dos usuários)
-// Qualquer arquivo dentro da pasta 'public' poderá ser acessado pela URL
-// Ex: http://localhost:3001/fotos/logo-1678886400000.png
 app.use(express.static(path.join(__dirname, '../public')));
 
 
 // --- Rotas da API ---
-// A ordem aqui é importante. Rotas mais específicas primeiro.
 app.use('/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/visitantes', visitantesRoutes);
-app.use('/api', testarConexao); // Rota de teste acessível em /api/testar-conexao
+app.use('/api', testarConexao); 
 app.use('/api/gfs', gfsRoutes);
-
-// A linha com erro foi removida daqui.
 
 
 // Porta do servidor
