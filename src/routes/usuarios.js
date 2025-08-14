@@ -25,11 +25,13 @@ const upload = multer({ storage: storage });
 // Função Auxiliar para construir a URL completa da imagem
 const addLogoUrl = (user, req) => {
     if (user && user.logo) {
-        const fullUrl = `${req.protocol}://${req.get('host')}/${user.logo.replace(/\\/g, '/')}`;
+        const fileName = path.basename(user.logo); // Pega só o nome do arquivo
+        const fullUrl = `${req.protocol}://${req.get('host')}/fotos/${fileName}`;
         return { ...user, logo_url: fullUrl };
     }
     return { ...user, logo_url: null };
 };
+
 
 const router = express.Router();
 

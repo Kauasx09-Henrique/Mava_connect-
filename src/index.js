@@ -53,7 +53,7 @@ app.options('*', cors(corsOptions));
 app.use(express.json()); 
 
 // Middleware para servir arquivos estáticos (como as fotos dos usuários)
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public/fotos')));
 
 
 // --- Rotas da API ---
@@ -62,6 +62,8 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/visitantes', visitantesRoutes);
 app.use('/api', testarConexao); 
 app.use('/api/gfs', gfsRoutes);
+app.use('/fotos', express.static(path.join(__dirname, '../public/fotos')));
+
 
 
 // Porta do servidor
