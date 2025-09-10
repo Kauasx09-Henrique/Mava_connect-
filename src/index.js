@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 
 // --- CONFIGURAÇÃO DE CORS SEGURA E CORRIGIDA ---
 const allowedOrigins = [
-  'https://mava-connect-front.vercel.app', // URL corrigida para corresponder ao erro
+  'https://mava-connect.onrender.com', // URL corrigida para corresponder ao erro
   'http://localhost:5173'                 // Porta do seu frontend local
 ];
 
