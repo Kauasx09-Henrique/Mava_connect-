@@ -1,6 +1,6 @@
 import express from 'express';
 import pg from 'pg';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -53,9 +53,9 @@ router.post('/register', async (req, res) => {
     );
     res.status(201).json({ message: 'Usuário criado com sucesso' });
   } catch (err) {
-  console.error('Erro ao registrar usuário:', err);
-  res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message });
-}
+    console.error('Erro ao registrar usuário:', err);
+    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message });
+  }
 
 });
 

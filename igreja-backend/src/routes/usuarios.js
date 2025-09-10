@@ -2,7 +2,7 @@ import express from 'express';
 import pg from 'pg';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt'; // Importe o bcrypt
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
