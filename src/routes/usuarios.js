@@ -29,9 +29,8 @@ const addLogoUrl = (user, req) => {
         const fullUrl = `${req.protocol}://${req.get('host')}/fotos/${fileName}`;
         return { ...user, logo_url: fullUrl };
     }
-    return { ...user, logo_url: null };
+    return { ...gituser, logo_url: null };
 };
-
 const router = express.Router();
 
 // --- ROTA PARA CRIAR NOVO USUÁRIO ---
