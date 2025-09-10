@@ -32,7 +32,6 @@ const addLogoUrl = (user, req) => {
     return { ...user, logo_url: null };
 };
 
-
 const router = express.Router();
 
 // --- ROTA PARA CRIAR NOVO USUÁRIO ---
