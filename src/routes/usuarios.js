@@ -1,5 +1,3 @@
-// Arquivo: routes/usuarios.js
-
 import express from 'express';
 import bcrypt from 'bcrypt';
 import { pool } from '../db.js';
@@ -25,12 +23,13 @@ const upload = multer({ storage: storage });
 // Função Auxiliar para construir a URL completa da imagem
 const addLogoUrl = (user, req) => {
     if (user && user.logo) {
-        const fileName = path.basename(user.logo); // Pega só o nome do arquivo
+        const fileName = path.basename(user.logo);
         const fullUrl = `${req.protocol}://${req.get('host')}/fotos/${fileName}`;
         return { ...user, logo_url: fullUrl };
     }
-    return { ...gituser, logo_url: null };
+    return { ...user, logo_url: null }; // Corrigido aqui
 };
+
 const router = express.Router();
 
 // --- ROTA PARA CRIAR NOVO USUÁRIO ---
@@ -57,6 +56,7 @@ router.post('/', upload.single('logo'), async (req, res) => {
         if (err.code === '23505') { 
             return res.status(409).json({ message: 'Este email já está cadastrado.' });
         }
+        console.error(err);
         res.status(500).json({ message: 'Erro interno ao registrar usuário.' });
     }
 });
@@ -67,6 +67,7 @@ router.get('/', async (req, res) => {
         const { rows } = await pool.query('SELECT * FROM usuarios ORDER BY nome_gf ASC');
         res.json(rows.map(user => addLogoUrl(user, req)));
     } catch (err) {
+        console.error('Erro na rota GET /usuarios:', err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
@@ -78,6 +79,7 @@ router.get('/:id', async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ message: 'Usuário não encontrado.' });
         res.json(addLogoUrl(rows[0], req));
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
@@ -91,7 +93,7 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
     try {
         const { rows: existingUserRows } = await pool.query('SELECT logo FROM usuarios WHERE id = $1', [id]);
         if (existingUserRows.length === 0) {
-            if(req.file) fs.unlinkSync(req.file.path); // Apaga arquivo enviado se usuário não existe
+            if(req.file) fs.unlinkSync(req.file.path);
             return res.status(404).json({ message: 'Usuário não encontrado para atualização.' });
         }
         const oldLogoPath = existingUserRows[0].logo;
@@ -123,6 +125,7 @@ router.put('/:id', upload.single('logo'), async (req, res) => {
         res.json(addLogoUrl(rows[0], req));
     } catch (err) {
         if (err.code === '23505') return res.status(409).json({ message: 'O email fornecido já está em uso.' });
+        console.error(err);
         res.status(500).json({ message: 'Erro interno ao atualizar o usuário.' });
     }
 });
@@ -143,6 +146,7 @@ router.delete('/:id', async (req, res) => {
         
         res.status(204).send();
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
