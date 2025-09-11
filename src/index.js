@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
-import cors from 'cors';
+import cors from 'cors'; // Agora vamos usar este pacote
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Importação das rotas
 import authRoutes from './routes/auth.js';
 import usuariosRoutes from './routes/usuarios.js';
 import visitantesRoutes from './routes/visitantes.js';
@@ -14,36 +15,42 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- CORS ---
+// --- SUGESTÃO 1: Usar o pacote 'cors' para simplificar a configuração ---
 const allowedOrigins = [
   'https://mava-connect-front.vercel.app',
   'http://localhost:5173'
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite requisições sem 'origin' (ex: Postman, apps mobile) ou da lista de permitidos
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Acesso não permitido por CORS'));
+    }
+  },
+  methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
+  credentials: true,
+  allowedHeaders: 'Content-Type,Authorization',
+};
 
-  if (req.method === 'OPTIONS') return res.sendStatus(204); // responde preflight
-  next();
-});
+// O 'cors(corsOptions)' substitui todo o seu middleware manual e já lida com as requisições OPTIONS.
+app.use(cors(corsOptions));
 
 // --- Middlewares ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- Rotas ---
-app.use('/auth', authRoutes);
+// --- SUGESTÃO 2: Padronizar rotas da API com o prefixo '/api' ---
+// Isso torna a API mais consistente. Lembre-se de atualizar no front-end!
+app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuariosRoutes);
-app.use('/visitantes', visitantesRoutes);
-app.use('/api', testarConexao);
+app.use('/api/visitantes', visitantesRoutes);
+app.use('/api/teste', testarConexao); // Adicionado prefixo para consistência
 app.use('/api/gfs', gfsRoutes);
-// Servir arquivos estáticos (logos)
+
+// --- Rota para servir arquivos estáticos (sem alterações, está ótimo) ---
 app.use('/fotos', express.static(path.join(__dirname, '../public/fotos')));
 
 const PORT = process.env.PORT || 3001;

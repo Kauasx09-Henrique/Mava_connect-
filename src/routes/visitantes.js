@@ -1,9 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../db.js';
+import { pool } from '../db.js'; // Garanta que o caminho para o seu db.js está correto
 
 const router = express.Router();
 
+// Middleware de autenticação (sem alterações)
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -19,6 +20,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// POST / - Criar um novo visitante
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const {
@@ -38,8 +40,10 @@ router.post('/', authenticateToken, async (req, res) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
             const gfResult = await client.query('SELECT id FROM gf WHERE LOWER(nome) = LOWER($1)', [gf_responsavel]);
             if (gfResult.rows.length === 0) {
+                // Lança um erro para ser pego pelo catch, o que iniciará o ROLLBACK
                 throw new Error(`GF com o nome '${gf_responsavel}' não encontrado.`);
             }
             const gf_id = gfResult.rows[0].id;
@@ -57,15 +61,20 @@ router.post('/', authenticateToken, async (req, res) => {
             res.status(201).json(novoVisitante.rows[0]);
         } catch (err) {
             await client.query('ROLLBACK');
+            // MELHORIA: Loga o erro real no console do servidor
+            console.error('[ERRO] Ao cadastrar visitante:', err);
             res.status(500).json({ error: 'Erro interno ao cadastrar visitante.', details: err.message });
         } finally {
             client.release();
         }
     } catch (globalErr) {
-        res.status(500).json({ error: 'Erro inesperado no servidor.' });
+        // MELHORIA: Loga o erro real no console do servidor
+        console.error('[ERRO GLOBAL] Em POST /visitantes:', globalErr);
+        res.status(500).json({ error: 'Erro inesperado no servidor.', details: globalErr.message });
     }
 });
 
+// GET / - Listar todos os visitantes
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const query = `
@@ -88,10 +97,13 @@ router.get('/', authenticateToken, async (req, res) => {
         });
         res.json(formattedRows);
     } catch (err) {
-        res.status(500).json({ error: 'Erro interno do servidor.' });
+        // MELHORIA: Loga o erro real no console do servidor
+        console.error('[ERRO] Ao buscar visitantes:', err);
+        res.status(500).json({ error: 'Erro interno do servidor.', details: err.message });
     }
 });
 
+// PUT /:id - Atualizar um visitante
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { nome, telefone, email, endereco } = req.body;
@@ -111,12 +123,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
         res.status(200).json({ message: 'Visitante atualizado com sucesso.' });
     } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: 'Erro interno ao atualizar visitante.' });
+        // MELHORIA: Loga o erro real no console do servidor
+        console.error(`[ERRO] Ao atualizar visitante ${id}:`, err);
+        res.status(500).json({ error: 'Erro interno ao atualizar visitante.', details: err.message });
     } finally {
         client.release();
     }
 });
 
+// PATCH /:id/status - Atualizar apenas o status
 router.patch('/:id/status', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -131,10 +146,13 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
         }
         res.status(200).json({ message: 'Status do visitante atualizado com sucesso.', visitante: result.rows[0] });
     } catch (err) {
-        res.status(500).json({ error: 'Erro interno do servidor ao atualizar status.' });
+        // MELHORIA: Loga o erro real no console do servidor
+        console.error(`[ERRO] Ao atualizar status do visitante ${id}:`, err);
+        res.status(500).json({ error: 'Erro interno do servidor ao atualizar status.', details: err.message });
     }
 });
 
+// DELETE /:id - Deletar um visitante
 router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
@@ -142,6 +160,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         await client.query('BEGIN');
         const visitanteResult = await client.query('SELECT endereco_id FROM visitantes WHERE id = $1', [id]);
         if (visitanteResult.rowCount === 0) {
+            await client.query('ROLLBACK'); // Importante fazer rollback mesmo se não encontrar
             return res.status(404).json({ error: 'Visitante não encontrado.' });
         }
         const { endereco_id } = visitanteResult.rows[0];
@@ -153,7 +172,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         res.status(204).send();
     } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: 'Erro interno do servidor.' });
+        // MELHORIA: Loga o erro real no console do servidor
+        console.error(`[ERRO] Ao deletar visitante ${id}:`, err);
+        res.status(500).json({ error: 'Erro interno do servidor.', details: err.message });
     } finally {
         client.release();
     }
