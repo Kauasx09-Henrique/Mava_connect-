@@ -99,5 +99,44 @@ router.get('/', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor.', details: err.message });
   }
 });
+router.delete('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params; // Pega o ID do visitante da URL (ex: /visitantes/123)
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN'); // Inicia uma transação
+
+    // 1. Primeiro, encontre o visitante para obter o ID do endereço associado a ele
+    const visitanteResult = await client.query('SELECT endereco_id FROM visitantes WHERE id = $1', [id]);
+
+    if (visitanteResult.rows.length === 0) {
+      // Se não encontrou o visitante, não há o que apagar
+      await client.query('ROLLBACK'); // Desfaz a transação
+      return res.status(404).json({ error: 'Visitante não encontrado.' });
+    }
+
+    const { endereco_id } = visitanteResult.rows[0];
+
+    // 2. Exclua o registro da tabela 'visitantes'
+    await client.query('DELETE FROM visitantes WHERE id = $1', [id]);
+
+    // 3. Exclua o registro do endereço associado na tabela 'endereco_visitante'
+    //    Isso evita que o banco de dados fique com dados "órfãos"
+    if (endereco_id) {
+        await client.query('DELETE FROM endereco_visitante WHERE id = $1', [endereco_id]);
+    }
+    
+    await client.query('COMMIT'); // Confirma as exclusões no banco de dados
+
+    res.status(200).json({ message: 'Visitante excluído com sucesso.' });
+
+  } catch (err) {
+    await client.query('ROLLBACK'); // Em caso de erro, desfaz tudo
+    console.error('[ERRO] Ao excluir visitante:', err);
+    res.status(500).json({ error: 'Erro interno ao excluir visitante.', details: err.message });
+  } finally {
+    client.release(); // Libera a conexão com o banco de dados
+  }
+});
 
 export default router;
