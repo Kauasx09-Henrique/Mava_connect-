@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
-import { io } from '../server.js';
+import { io } from '../index.js';
 
 const router = express.Router();
 
